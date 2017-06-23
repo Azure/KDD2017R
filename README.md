@@ -1,5 +1,6 @@
 TITLE: Using R for Scalable Data Science: Single Machines to Hadoop Spark Clusters
-Robert Horton, Mario Inchiosa, Vanja Paunic, and Hang Zhang
+
+PRESENTERS: Robert Horton, Mario Inchiosa, Vanja Paunic, and Hang Zhang
 
 HANDS-ON TUTORIAL DURATION: 3 hours
 

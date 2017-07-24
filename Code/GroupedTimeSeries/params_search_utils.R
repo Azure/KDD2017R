@@ -125,28 +125,18 @@ run_parameter_optimization <- function(dataset){
   
   print(paste("Initial best score: ", best_score))
   
-  # Start iterations
-  ic <- 0
-  repeat{
-    ic <- ic+1
-    cat(paste("Iteration ", ic, "...\n"))
+  cat("Searching algorithm parameters ... \n")
+  search_results <- search_algorithm_parameters(dataset, opt_params)
     
-    cat("Searching algorithm parameters ... \n")
-    search_results <- search_algorithm_parameters(dataset, opt_params)
+  print(paste("Current best score: ", best_score))
+  print(paste("Found best score: ", search_results$best_score))
     
-    print(paste("Current best score: ", best_score))
-    print(paste("Found best score: ", search_results$best_score))
+  curr_score <- search_results$best_score
     
-    curr_score <- search_results$best_score
-    
-    if(curr_score < best_score) {
-      best_score <- curr_score
-      opt_params <- search_results$opt_params
-    } else {
-      break
-    }
-    
-  }
+  if(curr_score < best_score) {
+    best_score <- curr_score
+    opt_params <- search_results$opt_params
+  } 
   
   # Return optimal parameters and best score (e.g., minimum RMSE)
   return(list(opt_params = opt_params,

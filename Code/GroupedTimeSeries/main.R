@@ -7,7 +7,7 @@
 source('forecast_utils.R')
 source('params_search_utils.R')
 # Set global variables
-RUN_LOCAL <- TRUE
+RUN_LOCAL <- FALSE
 EXPORT2POOL <- c(as.vector(lsf.str()), 'RUN_LOCAL')
 
 # Reading the dataset

@@ -14,7 +14,7 @@ if(!require("biglm")) install.packages('biglm')
 ##### Example of "ff"
 
 # change working directory
-setwd("/home/remoteuser/Data")
+setwd("/data/airline")
 
 # call the library
 library("ff")

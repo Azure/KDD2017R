@@ -57,6 +57,11 @@ rm *.gz
 
 rm -rf WeatherSubsetCsv AirlineSubsetCsv
 
+cd /data
+mkdir airline
+cd airline
+wget http://strata2017r.blob.core.windows.net/airline/airline_20MM.csv
+
 # Make directory used by Spark compute context
 mkdir -p /var/RevoShare/remoteuser
 
@@ -64,10 +69,10 @@ mkdir -p /var/RevoShare/remoteuser
 #######################################################################################################################################
 ## Change ownership of some of directories
 chown -R remoteuser:remoteuser /home/remoteuser/KDD2017R
-
+chown -R remoteuser:remoteuser /data/airline
 chown remoteuser:remoteuser /var/RevoShare/remoteuser
 
-sudo -u hadoop /opt/hadoop/current/bin/hadoop fs -chown -R remoteuser /user/RevoShare/remoteuser 
+sudo -u hadoop /opt/hadoop/current/bin/hdfs dfs -chown -R remoteuser /user/RevoShare/remoteuser
 
 #######################################################################################################################################
 #######################################################################################################################################

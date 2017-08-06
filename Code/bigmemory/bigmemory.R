@@ -13,7 +13,7 @@ if(!require("biganalytics")) install.packages('biganalytics')
 ##### Example of "bigmemory"
 
 # change working directory
-setwd("/home/remoteuser/Data")
+setwd("/data/airline")
 
 # call the library
 library("bigmemory")
@@ -37,7 +37,7 @@ head(airline_big)
 # size of big matrix object = 664 bytes/0.6 KB
 object.size(airline_big)
 
-# convert big matrix object ot R matrix object
+# convert big matrix object to R matrix object
 airline_matrix <- airline_big[,]
 
 # size of R matrix object = 2080002048 bytes/2.08 GB
@@ -57,8 +57,8 @@ object.size(airline_df)
 # call the library
 library("biganalytics")
 
-# perform simply data transformation on "CRSDepTime"
-# round "CRSDepTime" to the nearest hour
+# perform simple data transformation on "CRSDepTime"
+# truncate "CRSDepTime" to whole hour
 airline_big[, "CRSDepTime"] <- floor(airline_big[, "CRSDepTime"] / 100)
 
 # fit a glm model

@@ -1,6 +1,6 @@
 # ================================================ #
 # Main script to run parameter search optimization 
-# To run: source("main.R)
+# To run: source("main.R")
 # ================================================ #
 
 setwd("~/KDD2017R/Code/GroupedTimeSeries")

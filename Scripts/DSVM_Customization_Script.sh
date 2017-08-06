@@ -62,6 +62,9 @@ mkdir airline
 cd airline
 wget http://strata2017r.blob.core.windows.net/airline/airline_20MM.csv
 
+# Data directory for movie sentiment analysis
+mkdir /data/movie
+
 # Make directory used by Spark compute context
 mkdir -p /var/RevoShare/remoteuser
 
@@ -70,6 +73,7 @@ mkdir -p /var/RevoShare/remoteuser
 ## Change ownership of some of directories
 chown -R remoteuser:remoteuser /home/remoteuser/KDD2017R
 chown -R remoteuser:remoteuser /data/airline
+chown -R remoteuser:remoteuser /data/movie
 chown remoteuser:remoteuser /var/RevoShare/remoteuser
 
 sudo -u hadoop /opt/hadoop/current/bin/hdfs dfs -chown -R remoteuser /user/RevoShare/remoteuser

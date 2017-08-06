@@ -1,4 +1,5 @@
-setwd("~/KDD2017R/Code/SentimentAnalysis")
+# set the working directory
+setwd("/data/movie")
 
 library(readr)
 

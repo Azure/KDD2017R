@@ -36,8 +36,8 @@ object.size(airline_ff)
 library("ffbase")
 library("biglm")
 
-# perform simply data transformation on "CRSDepTime"
-# round "CRSDepTime" to the nearest hour
+# perform simple data transformation on "CRSDepTime"
+# truncate "CRSDepTime" to whole hour
 airline_ff[, "CRSDepTime"] <- floor(airline_ff[, "CRSDepTime"] / 100)
 
 # fit a glm model

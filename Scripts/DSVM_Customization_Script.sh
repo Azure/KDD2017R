@@ -5,6 +5,10 @@
 #######################################################################################################################################
 #######################################################################################################################################
 
+## DOWNLOAD CODE FILES
+cd /home/remoteuser
+git clone https://github.com/Azure/KDD2017R
+
 #######################################################################################################################################
 ## Setup autossh for hadoop service account
 #######################################################################################################################################
@@ -14,6 +18,8 @@ chmod 0600 ~hadoop/.ssh/authorized_keys
 chown hadoop:hadoop ~hadoop/.ssh/id_rsa
 chown hadoop:hadoop ~hadoop/.ssh/id_rsa.pub
 chown hadoop:hadoop ~hadoop/.ssh/authorized_keys
+
+cp /home/remoteuser/KDD2017R/Scripts/yarn-site.xml /opt/hadoop/current/etc/hadoop
 
 #######################################################################################################################################
 ## Start up several services, yarn, hadoop, rstudio server
@@ -27,26 +33,14 @@ cd /usr/lib64/microsoft-r/rserver/o16n/9.1.0
 dotnet Microsoft.RServer.Utils.AdminUtil/Microsoft.RServer.Utils.AdminUtil.dll -silentoneboxinstall KDD2017+halifax
 
 #######################################################################################################################################
-# Copy data and code to VM
+# Copy data to VM
 #######################################################################################################################################
 
-# Copy Spark configuration files & shell script
-#cd /home/remoteuser
-#wget https://raw.githubusercontent.com/Azure/Azure-MachineLearning-DataScience/master/Misc/KDD2017R/Scripts/spark-defaults.conf
-#mv spark-defaults.conf /dsvm/tools/spark/current/conf
-#wget https://raw.githubusercontent.com/Azure/Azure-MachineLearning-DataScience/master/Misc/KDD2017R/Scripts/log4j.properties
-#mv log4j.properties /dsvm/tools/spark/current/conf
-
-## DOWNLOAD CODE FILES
-cd /home/remoteuser
-git clone https://github.com/Azure/KDD2017R
-
-## DOWNLOAD DATA FILES
-# Airline data
 cd /home/remoteuser
 mkdir Data
 cd Data
 
+# Airline data
 wget http://cdspsparksamples.blob.core.windows.net/data/Airline/WeatherSubsetCsv.tar.gz
 wget http://cdspsparksamples.blob.core.windows.net/data/Airline/AirlineSubsetCsv.tar.gz
 

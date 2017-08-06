@@ -13,7 +13,7 @@ cc <- rxSparkConnect(interop = "sparklyr",
                      reset = TRUE,
                      consoleOutput = TRUE,
                      # numExecutors = 1,
-                     # executorCores = 2,
+                     executorCores = 4,
                      driverMem = "2g",
                      executorMem = "2g",
                      executorOverheadMem = "4g"
@@ -46,19 +46,17 @@ weatherDF <- sparklyr::spark_read_csv(sc = sc,
 # Transform the data
 ################################################
 
-
-airlineDF <- airlineDF %>% rename(
-                    ArrDel15 = ARR_DEL15,
-                    Year = YEAR,
-                    Month = MONTH,
-                    DayOfMonth = DAY_OF_MONTH,
-                    DayOfWeek = DAY_OF_WEEK,
-                    Carrier = UNIQUE_CARRIER,
-                    OriginAirportID = ORIGIN_AIRPORT_ID,
-                    DestAirportID = DEST_AIRPORT_ID,
-                    CRSDepTime = CRS_DEP_TIME,
-                    CRSArrTime = CRS_ARR_TIME
-)
+airlineDF <- airlineDF %>%
+  rename(ArrDel15 = ARR_DEL15) %>%
+  rename(Year = YEAR) %>%
+  rename(Month = MONTH) %>%
+  rename(DayOfMonth = DAY_OF_MONTH) %>%
+  rename(DayOfWeek = DAY_OF_WEEK) %>%
+  rename(Carrier = UNIQUE_CARRIER) %>%
+  rename(OriginAirportID = ORIGIN_AIRPORT_ID) %>%
+  rename(DestAirportID = DEST_AIRPORT_ID) %>%
+  rename(CRSDepTime = CRS_DEP_TIME) %>%
+  rename(CRSArrTime = CRS_ARR_TIME)
 
 
 # Keep only the desired columns from the flight data 
@@ -73,12 +71,12 @@ airlineDF <- airlineDF %>% select(ArrDel15, Year, Month, DayOfMonth,
 airlineDF <- airlineDF %>% mutate(CRSDepTime = floor(CRSDepTime / 100))
 
 
-weatherDF <- weatherDF %>% rename(
-                    OriginAirportID = AirportID,
-                    Year = AdjustedYear,
-                    Month = AdjustedMonth,
-                    DayOfMonth = AdjustedDay,
-                    CRSDepTime = AdjustedHour)
+weatherDF <- weatherDF %>%
+  rename(OriginAirportID = AirportID) %>%
+  rename(Year = AdjustedYear) %>%
+  rename(Month = AdjustedMonth) %>%
+  rename(DayOfMonth = AdjustedDay) %>%
+  rename(CRSDepTime = AdjustedHour)
 
 
 # Average the weather readings by hour
@@ -100,12 +98,13 @@ weatherSummary <- weatherDF %>%
 originDF <- left_join(x = airlineDF,
                       y = weatherSummary)
 
-originDF <- originDF %>% rename(VisibilityOrigin = Visibility,
-                                DryBulbCelsiusOrigin = DryBulbCelsius,
-                                DewPointCelsiusOrigin = DewPointCelsius,
-                                RelativeHumidityOrigin = RelativeHumidity,
-                                WindSpeedOrigin = WindSpeed,
-                                AltimeterOrigin = Altimeter)
+originDF <- originDF %>%
+  rename(VisibilityOrigin = Visibility) %>%
+  rename(DryBulbCelsiusOrigin = DryBulbCelsius) %>%
+  rename(DewPointCelsiusOrigin = DewPointCelsius) %>%
+  rename(RelativeHumidityOrigin = RelativeHumidity) %>%
+  rename(WindSpeedOrigin = WindSpeed) %>%
+  rename(AltimeterOrigin = Altimeter)
 
 
 #######################################################
@@ -117,13 +116,13 @@ weatherSummary <- weatherSummary %>% rename(DestAirportID = OriginAirportID)
 destDF <- left_join(x = originDF,
                     y = weatherSummary)
 
-airWeatherDF <- destDF %>% rename(
-                       VisibilityDest = Visibility,
-                       DryBulbCelsiusDest = DryBulbCelsius,
-                       DewPointCelsiusDest = DewPointCelsius,
-                       RelativeHumidityDest = RelativeHumidity,
-                       WindSpeedDest = WindSpeed,
-                       AltimeterDest = Altimeter)
+airWeatherDF <- destDF %>%
+  rename(VisibilityDest = Visibility) %>%
+  rename(DryBulbCelsiusDest = DryBulbCelsius) %>%
+  rename(DewPointCelsiusDest = DewPointCelsius) %>%
+  rename(RelativeHumidityDest = RelativeHumidity) %>%
+  rename(WindSpeedDest = WindSpeed) %>%
+  rename(AltimeterDest = Altimeter)
 
 
 #######################################################

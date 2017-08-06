@@ -17,4 +17,7 @@ install.packages("biglm")
 install.packages("hts", repos='https://mran.revolutionanalytics.com/snapshot/2016-11-01')
 install.packages("fpp", repos='https://mran.revolutionanalytics.com/snapshot/2016-11-01')
 
+library(devtools)
+install_github(c("Azure/rAzureBatch", "Azure/doAzureParallel"))
+
 # install.packages("ggmap", dependencies=TRUE)

@@ -1,3 +1,5 @@
+setwd("~/KDD2017R/Code/SentimentAnalysis")
+
 library(readr)
 
 set.seed(1)

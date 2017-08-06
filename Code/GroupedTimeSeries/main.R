@@ -3,6 +3,8 @@
 # To run: source("main.R)
 # ================================================ #
 
+setwd("~/KDD2017R/Code/GroupedTimeSeries")
+
 # Load necessary functions
 source('forecast_utils.R')
 source('params_search_utils.R')

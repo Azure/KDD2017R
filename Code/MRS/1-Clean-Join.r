@@ -129,7 +129,10 @@ airWeatherDF <- destDF %>%
 # Register the joined data as a Spark SQL/Hive table
 #######################################################
 
+# NOTE: IGNORE "Translator is missing window functions" WARNING
+# https://github.com/rstudio/sparklyr/issues/792
 airWeatherDF <- airWeatherDF %>% sdf_register("flightsweather")
+
 tbl_cache(sc, "flightsweather")
 
 

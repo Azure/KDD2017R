@@ -7,11 +7,17 @@
 # split out the training data
 
 airWeatherTrainDF <- airWeatherDF %>% filter(Year < 2012) 
+
+# NOTE: IGNORE "Translator is missing window functions" WARNING
+# https://github.com/rstudio/sparklyr/issues/792
 airWeatherTrainDF <- airWeatherTrainDF %>% sdf_register("flightsweathertrain")
 
 # split out the testing data
 
 airWeatherTestDF <- airWeatherDF %>% filter(Year == 2012 & Month == 1)
+
+# NOTE: IGNORE "Translator is missing window functions" WARNING
+# https://github.com/rstudio/sparklyr/issues/792
 airWeatherTestDF <- airWeatherTestDF %>% sdf_register("flightsweathertest")
 
 

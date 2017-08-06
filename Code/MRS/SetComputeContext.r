@@ -21,7 +21,7 @@ if(file.exists("/dsvm"))
 
 rxOptions(fileSystem = RxHdfsFileSystem())
 
-dataDir <- "/share"
+dataDir <- "/user/RevoShare/remoteuser/Data"
   
 
 

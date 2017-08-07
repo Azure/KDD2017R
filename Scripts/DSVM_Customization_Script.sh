@@ -36,9 +36,9 @@ dotnet Microsoft.RServer.Utils.AdminUtil/Microsoft.RServer.Utils.AdminUtil.dll -
 # Copy data to VM
 #######################################################################################################################################
 
-cd /home/remoteuser
-mkdir Data
-cd Data
+cd /data
+mkdir airline
+cd airline
 
 # Airline data
 wget http://cdspsparksamples.blob.core.windows.net/data/Airline/WeatherSubsetCsv.tar.gz
@@ -47,19 +47,16 @@ wget http://cdspsparksamples.blob.core.windows.net/data/Airline/AirlineSubsetCsv
 tar -xzf WeatherSubsetCsv.tar.gz
 tar -xzf AirlineSubsetCsv.tar.gz
 
-rm *.gz 
+rm WeatherSubsetCsv.tar.gz AirlineSubsetCsv.tar.gz
 
 # Make hdfs directories
-/opt/hadoop/current/bin/hadoop fs -mkdir -p /user/RevoShare/remoteuser/Data
+/opt/hadoop/current/bin/hdfs dfs -mkdir -p /user/RevoShare/remoteuser/Data
 
 # Copy data to HDFS
-/opt/hadoop/current/bin/hadoop fs -copyFromLocal * /user/RevoShare/remoteuser/Data
+/opt/hadoop/current/bin/hdfs dfs -copyFromLocal WeatherSubsetCsv AirlineSubsetCsv /user/RevoShare/remoteuser/Data
 
 rm -rf WeatherSubsetCsv AirlineSubsetCsv
 
-cd /data
-mkdir airline
-cd airline
 wget http://strata2017r.blob.core.windows.net/airline/airline_20MM.csv
 
 # Data directory for movie sentiment analysis

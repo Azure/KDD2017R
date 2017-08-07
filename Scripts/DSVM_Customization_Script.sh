@@ -7,7 +7,7 @@
 
 ## DOWNLOAD CODE FILES
 cd /home/remoteuser
-git clone https://github.com/Azure/KDD2017R
+git clone git@github.com:Azure/KDD2017R.git
 
 #######################################################################################################################################
 ## Setup autossh for hadoop service account

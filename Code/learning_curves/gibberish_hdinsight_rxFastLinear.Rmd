@@ -1,0 +1,238 @@
+---
+title: "Training a Gibberish Detector on HDInsight"
+author: "Bob Horton"
+date: "July 20, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE, cache=TRUE, message=FALSE, warning=FALSE)
+rxOptions(reportProgress=0)
+# ssh -L localhost:8787:localhost:8787 sshuser@learningcurves-ed-ssh.azurehdinsight.net
+```
+
+
+```{r load_hdfs_data}
+t0 <- Sys.time()
+
+HDINSIGHT <- FALSE # TRUE
+HDFS <- FALSE # TRUE
+COPY_DATA_TO_HDFS <- FALSE
+
+LOCAL_DATA_DIR <- "."
+LOCAL_DATA_FILE <- "unique_name_training_data.xdf"
+
+HDFS_DATA_DIR <- "uniquenamedata"
+
+
+local_xdf <- RxXdfData(file.path(LOCAL_DATA_DIR, LOCAL_DATA_FILE))
+
+data_table <- if (HDFS){
+  HDFS_DATA_PATH <-  if (HDINSIGHT){
+    "/user/RevoShare/sshuser" # HDInsight
+  } else {
+    "/user/RevoShare/remoteuser/Data"  # single node
+  }
+  
+  hdfs_xdf <- RxXdfData(file.path(HDFS_DATA_PATH, HDFS_DATA_DIR),
+                          fileSystem=RxHdfsFileSystem(), 
+                          createCompositeSet=TRUE)
+  
+  if (COPY_DATA_TO_HDFS){
+    dataPath <- strsplit(HDFS_DATA_PATH, "/", fixed=TRUE)[[1]]
+    
+    for (depth in 2:length(dataPath)){
+      subPath <- paste(dataPath[1:depth], collapse='/')
+      rxHadoopMakeDir(subPath)
+    }
+    
+    rxDataStep(local_xdf, outFile=hdfs_xdf, overwrite=TRUE)
+  }
+  
+  hdfs_xdf
+  
+} else {
+  local_xdf
+}
+
+xdf_info <- rxGetInfo(data_table)
+N <- xdf_info$numRows
+```
+
+## Train a model
+
+```{r train_model}
+
+fit <- rxFastLinear(
+	is_real ~ chargrams, 
+	data_table,
+	type="binary", normalize="no",
+	l1Weight=0, l2Weight=1e-8,
+	mlTransforms = featurizeText(
+		vars = c(chargrams="name"),
+		case='lower',
+		keepNumbers=FALSE, 
+		keepDiacritics=FALSE, 
+		keepPunctuations=FALSE,
+		charFeatureExtractor=ngramCount(
+			ngramLength=3, 
+			weighting="tf", 
+			maxNumTerms=1e8
+		),
+		wordFeatureExtractor=NULL
+	)
+)
+
+t1 <- Sys.time()
+
+sprintf("Time to train one model: %s", t1 - t0)
+```
+
+```{r examine_test_set_preformance}
+head(coef(fit))
+
+test_set <- RxXdfData("unique_name_test_data.xdf")
+
+predictions <- rxPredict(fit, test_set, extraVarsToWrite=c("name", "category", "is_real"))
+
+rxRocCurve("is_real", "Probability", predictions)
+
+predictions <- predictions[order(predictions$Probability, decreasing = TRUE),]
+
+head(predictions[!predictions$is_real, ])
+tail(predictions[predictions$is_real, ])
+
+with(predictions, xtabs(~ PredictedLabel + category))
+
+table(predictions[grep("sas", predictions$name, ignore.case=TRUE),"category"])
+
+table(predictions[grep("i", predictions$name, ignore.case=TRUE),"category"])
+table(predictions[grep("ii", predictions$name, ignore.case=TRUE),"category"])
+
+table(predictions[grep("f", predictions$name, ignore.case=TRUE),"category"])
+table(predictions[grep("ff", predictions$name, ignore.case=TRUE),"category"])
+
+```
+
+## Define parameters for multiple jobs
+
+```{r generate_parameters_table}
+source("learning_curve_lib.R")
+
+K_FOLDS <- 3
+SALT <- 1
+MAX_TSS <- (1 - 1/K_FOLDS) * N # approximate number of cases available for training.
+
+if (HDINSIGHT){
+  L1_WEIGHTS <- c(0, 10^(c(-8, -6)))
+  L2_WEIGHTS <- 10^c(-9, -6, -4)
+  # L2_WEIGHTS cannot be smaller than 9.9999999*10^-10
+  N_GRAM_LENGTHS <- 1:4
+  NUM_TSS <- 10
+} else {
+  L1_WEIGHTS <- 0
+  L2_WEIGHTS <- 10^c(-9, -5)
+  N_GRAM_LENGTHS <- 1:3
+  NUM_TSS <- 8
+}
+names(N_GRAM_LENGTHS) <- N_GRAM_LENGTHS
+
+training_fractions <- get_training_set_fractions(1000, MAX_TSS, NUM_TSS)
+
+library(MicrosoftML)
+
+# Give additional arguments specific for each learner, as needed
+LEARNERS <- list(
+  rxFastLinear=list(convergenceTolerance = 0.1, 
+                    normalize="No", 
+                    lossFunction=logLoss())
+)
+
+
+ML_TRANSFORMS <- lapply(N_GRAM_LENGTHS, function(ngl)
+  featurizeText(vars = c(chargrams = "name"),
+                case='lower',
+                keepNumbers=FALSE, 
+                keepDiacritics = FALSE, 
+                keepPunctuations = FALSE,
+                charFeatureExtractor = ngramCount(
+                  ngramLength=ngl, weighting = "tf", maxNumTerms=1e8),
+                wordFeatureExtractor = NULL))
+
+
+grid_dimensions <- list( model_class=names(LEARNERS),
+                         training_fraction=training_fractions,
+                         with_formula="is_real ~ chargrams",
+                         test_set_kfold_id=1,
+                         KFOLDS=K_FOLDS,
+                         mlTransforms=ML_TRANSFORMS,
+                         l1Weight = L1_WEIGHTS,
+                         l2Weight = L2_WEIGHTS
+                   )
+
+parameter_table <- do.call(expand.grid, c(grid_dimensions, stringsAsFactors=FALSE))
+
+head(parameter_table)
+
+```
+
+## Run the jobs
+
+```{r run_parameter_sets}
+parameter_list <- lapply(1:nrow(parameter_table), function(i){
+  par <- parameter_table[i,]
+  par <- as.list(c(data_table=data_table,
+                   par,
+                   LEARNERS[[par$model_class]],
+                 type="binary"))
+  par
+})
+
+if (HDINSIGHT){
+  rxSetComputeContext(RxSpark(
+      consoleOutput=TRUE,
+      numExecutors=4,
+      executorCores=8,
+      executorOverheadMemory = "20000m"))
+} else {
+  rxSetComputeContext("localpar")
+}
+
+t3 <- Sys.time()
+training_results <- rxExec(run_training_fraction,
+                           elemArgs = parameter_list,
+                           execObjects = c("data_table", "SALT"))
+
+sprintf("Time to train models: %s", Sys.time() - t3)
+
+```
+
+## Visualize Results
+
+```{r unique_names_results_rxFastLinear}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+training_results2 <- lapply(training_results, function(tr){
+  names(tr)[10] <- "mltransforms"
+  tr
+})
+training_results_df <- bind_rows(training_results2)
+
+# names(training_results_df)[10] <- "mltransforms"
+training_results_df$ngramLength <- gsub(".*ngramLength=([0-9]+) .*", "\\1", training_results_df$mltransforms)
+
+training_results_df %>%
+  filter(l2Weight < 0.01) %>%
+  gather(set, AUC, training, test) %>%
+  mutate(kfold = factor(kfold), 
+         l1Weight=factor(l1Weight), 
+         l2Weight=factor(l2Weight)) %>%
+  ggplot(aes(x=log10(tss), y=AUC, col=ngramLength, linetype=set)) + geom_line(size=1.0) + 
+  facet_grid(l1Weight ~ l2Weight) +
+    ggtitle("faceting by regularization weights")
+
+
+```

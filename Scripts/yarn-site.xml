@@ -26,7 +26,7 @@
 </property>
 <property>
 <name>yarn.nodemanager.vmem-pmem-ratio</name>
-<value>10</value>
+<value>20</value>
 <description>Ratio between virtual memory to physical memory when setting memory limits for containers. Container allocations are expressed in terms of physical memory, and virtual memory usage is allowed to exceed this allocation by this ratio.</description>
 </property>
 </configuration>

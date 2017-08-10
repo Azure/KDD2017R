@@ -42,7 +42,7 @@ trainDS <- RxHiveData(table = "flightsweathertrain", colInfo = colInfoFull)
 testDS <- RxHiveData(table = "flightsweathertest", colInfo = colInfoFull)
 
 # save the test data as XDF
-airWeatherTestXdf <- RxXdfData(file.path(dataDir, "airWeatherTestXdf"))
+airWeatherTestXdf <- RxXdfData(file.path(dataDir, "airWeatherTestXdf"), fileSystem = hdfs)
 rxDataStep(inData = testDS, outFile = airWeatherTestXdf, overwrite = TRUE)
 
 ################################################
@@ -67,7 +67,7 @@ save(logitModel, file = "logitModelSubset.RData")
 
 # Predict over test data (Logistic Regression).
 
-logitPredict <- RxXdfData(file.path(dataDir, "logitPredictSubset"))
+logitPredict <- RxXdfData(file.path(dataDir, "logitPredictSubset"), fileSystem = hdfs)
 
 # Use the scalable rxPredict() function
 
@@ -99,7 +99,7 @@ summary(fastTreesEnsembleModel)
 save(fastTreesEnsembleModel, file = "fastTreesEnsembleModelSubset.RData")
 
 # Test
-fastTreesEnsemblePredict <- RxXdfData(file.path(dataDir, "fastTreesEnsemblePredictSubset"))
+fastTreesEnsemblePredict <- RxXdfData(file.path(dataDir, "fastTreesEnsemblePredictSubset"), fileSystem = hdfs)
 
 # Experimental feature to parallelize rxPredict when using a MicrosoftML model
 assign("predictMethod", "useDataStep", envir = MicrosoftML:::rxHashEnv)

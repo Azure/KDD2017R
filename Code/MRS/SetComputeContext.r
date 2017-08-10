@@ -19,7 +19,7 @@ if(file.exists("/dsvm"))
 # N.B. Can be used with local or RxSpark compute contexts
 ################################################
 
-rxOptions(fileSystem = RxHdfsFileSystem())
+hdfs <- RxHdfsFileSystem()
 
 dataDir <- "/user/RevoShare/remoteuser/Data"
   

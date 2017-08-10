@@ -14,7 +14,7 @@ rxSetComputeContext("local")
 load("logitModelSubset.RData") # loads logitModel
 
 # Reference the test data to be scored
-airWeatherTestXdf <- RxXdfData( file.path(dataDir, "airWeatherTestXdf") )
+airWeatherTestXdf <- RxXdfData(file.path(dataDir, "airWeatherTestXdf"), fileSystem = hdfs)
 
 # Read the first 6 rows and remove the ArrDel15 column
 dataToBeScored <- base::subset(head(airWeatherTestXdf), select = -ArrDel15)

@@ -62,6 +62,9 @@ wget http://strata2017r.blob.core.windows.net/airline/airline_20MM.csv
 # Data directory for movie sentiment analysis
 mkdir /data/movie
 
+# Data directory for learning curves
+mkdir /data/learning_curves
+
 # Make directory used by Spark compute context
 mkdir -p /var/RevoShare/remoteuser
 
@@ -71,6 +74,7 @@ mkdir -p /var/RevoShare/remoteuser
 chown -R remoteuser:remoteuser /home/remoteuser/KDD2017R
 chown -R remoteuser:remoteuser /data/airline
 chown -R remoteuser:remoteuser /data/movie
+chown -R remoteuser:remoteuser /data/learning_curves
 chown remoteuser:remoteuser /var/RevoShare/remoteuser
 
 sudo -u hadoop /opt/hadoop/current/bin/hdfs dfs -chown -R remoteuser /user/RevoShare/remoteuser

@@ -3,7 +3,6 @@ library(dplyr)
 library(tidyr)
 library(hts)
 library(lubridate)
-library(doAzureParallel)
 
 # A function that generates a power set of the given set
 # 
@@ -74,9 +73,8 @@ search_algorithm_parameters <- function(dataset, base_params){
   result <- foreach(p=params_space, .export = EXPORT2POOL) %dopar% {
     
     # load necessary libraries on compute nodes
-    if(!RUN_LOCAL){
-      load_libraries()  
-    }
+    load_libraries()
+
     # run cross-validation
     crossval_result <- get_crossval_accuracy(dataset, params = p)
     # collect scores across folds

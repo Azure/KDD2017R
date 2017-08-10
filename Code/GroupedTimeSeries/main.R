@@ -18,9 +18,19 @@ dataset <- process_dataset(dataset)
 
 if(RUN_LOCAL){
 
-    paramopt_result <- run_parameter_optimization(dataset)
+  library(doParallel)
+
+  cl <- makeCluster(detectCores())
+
+  registerDoParallel(cl)
+
+  paramopt_result <- run_parameter_optimization(dataset)
+
+  stopCluster(cl)
 
 } else {
+
+  library(doAzureParallel)
   
   # 1. Generate your credential and cluster configuration files.  
   # generateClusterConfig("cluster.json")

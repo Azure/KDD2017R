@@ -19,7 +19,14 @@ chown hadoop:hadoop ~hadoop/.ssh/id_rsa
 chown hadoop:hadoop ~hadoop/.ssh/id_rsa.pub
 chown hadoop:hadoop ~hadoop/.ssh/authorized_keys
 
+# Increase vmem ratio limit
 cp /home/remoteuser/KDD2017R/Scripts/yarn-site.xml /opt/hadoop/current/etc/hadoop
+
+# move HDFS directories to /data
+cp /home/remoteuser/KDD2017R/Scripts/hdfs-site.xml /opt/hadoop/current/etc/hadoop
+mkdir -p /data/hadoop
+chown hadoop:hadoop /data/hadoop
+mv /opt/hadoop/data /data/hadoop
 
 #######################################################################################################################################
 ## Start up several services, yarn, hadoop, rstudio server

@@ -1,44 +1,68 @@
 ---
-title: "Training a Gibberish Detector on HDInsight"
+title: "Detecting Gibberish"
 author: "Bob Horton"
-date: "July 20, 2017"
+date: "August 16, 2017"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE, cache=TRUE, message=FALSE, warning=FALSE)
 rxOptions(reportProgress=0)
-# ssh -L localhost:8787:localhost:8787 sshuser@learningcurves-ed-ssh.azurehdinsight.net
 ```
 
+```{r}
+if(file.exists("/dsvm"))
+{
+  # Set environment variables for the Data Science VM
+  Sys.setenv(SPARK_HOME = "/dsvm/tools/spark/current",
+             HADOOP_HOME = "/opt/hadoop/current",
+             YARN_CONF_DIR = "/opt/hadoop/current/etc/hadoop", 
+             PATH = paste0(Sys.getenv("PATH"), ":/opt/hadoop/current/bin"),
+             JAVA_HOME = "/usr/lib/jvm/java-1.8.0-openjdk-amd64"
+  )
+} else {
+  Sys.setenv(SPARK_HOME="/usr/hdp/current/spark2-client")
+}
 
+
+```
 ```{r load_hdfs_data}
-t0 <- Sys.time()
+USE_SPARK <- TRUE
+USE_CLUSTER <- USE_SPARK & FALSE # TRUE
 
-HDINSIGHT <- FALSE # TRUE
-HDFS <- FALSE # TRUE
-COPY_DATA_TO_HDFS <- FALSE
+USE_HDFS <- USE_SPARK
 
 LOCAL_DATA_DIR <- "."
 LOCAL_DATA_FILE <- "unique_name_training_data.xdf"
 
+TEST_DATA_FILE <- "unique_name_test_data.xdf"
+
 HDFS_DATA_DIR <- "uniquenamedata"
+HDFS_TEST_DIR <- "uniquenametest"
 
+local_data_file <- file.path(LOCAL_DATA_DIR, LOCAL_DATA_FILE)
+local_test_file <- file.path(LOCAL_DATA_DIR, TEST_DATA_FILE)
 
-local_xdf <- RxXdfData(file.path(LOCAL_DATA_DIR, LOCAL_DATA_FILE))
-
-data_table <- if (HDFS){
-  HDFS_DATA_PATH <-  if (HDINSIGHT){
-    "/user/RevoShare/sshuser" # HDInsight
+if (USE_HDFS){
+  HDFS_DATA_PATH <-  if (USE_CLUSTER){
+    "/user/RevoShare/sshuser/learning_curves" # HDInsight
   } else {
-    "/user/RevoShare/remoteuser/Data"  # single node
+    "/user/RevoShare/remoteuser/Data/learning_curves"  # single node
   }
   
   hdfs_xdf <- RxXdfData(file.path(HDFS_DATA_PATH, HDFS_DATA_DIR),
                           fileSystem=RxHdfsFileSystem(), 
-                          createCompositeSet=TRUE)
+                          createCompositeSet=TRUE,
+                          blocksPerCompositeFile = 1)
   
-  if (COPY_DATA_TO_HDFS){
+  hdfs_test_xdf <- RxXdfData(file.path(HDFS_DATA_PATH, HDFS_TEST_DIR),
+                          fileSystem=RxHdfsFileSystem(), 
+                          createCompositeSet=TRUE,
+                          blocksPerCompositeFile = 1)
+
+  if (!rxHadoopFileExists(hdfs_test_xdf@file)){
+    print("Creating HDFS directories and copying data")
+    
     dataPath <- strsplit(HDFS_DATA_PATH, "/", fixed=TRUE)[[1]]
     
     for (depth in 2:length(dataPath)){
@@ -46,23 +70,49 @@ data_table <- if (HDFS){
       rxHadoopMakeDir(subPath)
     }
     
-    rxDataStep(local_xdf, outFile=hdfs_xdf, overwrite=TRUE)
+    imported_data_table <- file.path(HDFS_DATA_PATH, "imported_data_table.xdf")
+    imported_test_set <- file.path(HDFS_DATA_PATH, "imported_test_set.xdf")
+    
+    if (!rxHadoopFileExists(imported_data_table))
+      rxHadoopCopyFromLocal(local_data_file, imported_data_table)
+    
+    if (!rxHadoopFileExists(imported_test_set))
+      rxHadoopCopyFromLocal(local_test_file, imported_test_set)
+    
+    rxDataStep(RxXdfData(imported_data_table,
+                         fileSystem=RxHdfsFileSystem()),
+               outFile=hdfs_xdf, 
+               blocksPerRead=1e5, overwrite=TRUE)
+    rxDataStep(RxXdfData(imported_test_set,
+                         fileSystem=RxHdfsFileSystem()),
+               outFile=hdfs_test_xdf,
+               blocksPerRead=1e5, overwrite=TRUE)
   }
   
-  hdfs_xdf
+  data_table <- hdfs_xdf
+  test_set <- hdfs_test_xdf
   
 } else {
-  local_xdf
+  
+  data_table <- RxXdfData(local_data_file)
+  test_set <- RxXdfData(local_test_file)
+  
 }
 
+# collect metadata
 xdf_info <- rxGetInfo(data_table)
+
+# total number of cases in input dataset
 N <- xdf_info$numRows
 ```
 
 ## Train a model
 
 ```{r train_model}
+# Start time
+t0 <- Sys.time()
 
+# Use the featurizer to generate chargrams, and fit a linear model
 fit <- rxFastLinear(
 	is_real ~ chargrams, 
 	data_table,
@@ -85,70 +135,161 @@ fit <- rxFastLinear(
 
 t1 <- Sys.time()
 
-sprintf("Time to train one model: %s", t1 - t0)
+difftime(t1, t0)
 ```
 
-```{r examine_test_set_preformance}
-head(coef(fit))
+## Examine model predictions
 
-test_set <- RxXdfData("unique_name_test_data.xdf")
+```{r examine_test_set_performance}
 
-predictions <- rxPredict(fit, test_set, extraVarsToWrite=c("name", "category", "is_real"))
+# Use the model to score the test cases.
+predictions <- rxPredict(fit, test_set, "predictions.xdf", overwrite=TRUE,
+                         extraVarsToWrite=c("name", "category", "is_real"))
 
+# Cross-tabulate by predicted and actual category.
+rxCrossTabs(~ F(PredictedLabel) : category, predictions)$counts
+
+# Build an ROC curve from the `predictions` XDF file.
 rxRocCurve("is_real", "Probability", predictions)
 
-predictions <- predictions[order(predictions$Probability, decreasing = TRUE),]
+# This function pulls the best- (or worst-) scoring examples from a given category.
+# In the first pass, it extracts the category members into their own XDF file. We
+# take this opportunity to take the logarithm of the probability, because these values
+# are more spread out and it is easier to use them for approximate quantiles.
+# Then we load the top (or bottom) 1 percent of cases into memory, and only
+# sort these.
+get_extremes_from_category <- function(xdf, category="real", cmp=">", percent=99){
+  category_file <- sprintf("predictions_%s.xdf", category)
+  category_xdf <- rxDataStep(predictions, 
+                             category_file, 
+                             rowSelection=category==cat, 
+                             transforms=list(log10Probability=log10(Probability)),
+                             transformObjects=list(cat=category),
+                             overwrite=TRUE)
+  
+  xformObj <- list(q100=rxQuantile("log10Probability", 
+                                   category_xdf, 
+                                   probs = (0:100)/100),
+                   cmp_fun=get(cmp),
+                   percentile=sprintf("%d%%", 
+                                      if(cmp=="<") 
+                                        percent 
+                                      else 
+                                        100 - percent))
+  pct_df <- rxDataStep(category_xdf,
+                       rowSelection=cmp_fun(log10Probability, q100[[percentile]]),
+                       transformObjects = xformObj)
+  pct_df[order(pct_df[["Probability"]], decreasing = TRUE),]
+}
 
-head(predictions[!predictions$is_real, ])
-tail(predictions[predictions$is_real, ])
 
-with(predictions, xtabs(~ PredictedLabel + category))
+# Best-scoring real names:
+head(get_extremes_from_category(predictions, 
+                                category="real", 
+                                cmp=">", percent=99))
 
-table(predictions[grep("sas", predictions$name, ignore.case=TRUE),"category"])
+# Worst-scoring real names:
+tail(get_extremes_from_category(predictions, 
+                                category="real", 
+                                cmp="<", percent=1))
 
-table(predictions[grep("i", predictions$name, ignore.case=TRUE),"category"])
-table(predictions[grep("ii", predictions$name, ignore.case=TRUE),"category"])
+# Best-scoring random names:
+head(get_extremes_from_category(predictions, 
+                                category="random", 
+                                cmp=">", percent=99))
 
-table(predictions[grep("f", predictions$name, ignore.case=TRUE),"category"])
-table(predictions[grep("ff", predictions$name, ignore.case=TRUE),"category"])
+# Best-scoring pseudogibberish names:
+head(get_extremes_from_category(predictions, 
+                                category="pseudogibberish", 
+                                cmp=">", percent=99))
+
 
 ```
 
-## Define parameters for multiple jobs
+
+## Examine model coefficients
+
+```{r examine_coefficients}
+
+# Examine the first few coefficients from the model
+knitr::kable(data.frame(head(coef(fit), n=12)))
+
+# How many cases in each category do we have in the test set?
+# This is equivalent to: table(predictions$category)
+rxCrossTabs(~ category, predictions)$counts
+
+# How do they break down if we look at only names containing 'sas'?
+# With in-memory data, you could do the same thing like this:
+# xtabs(~ category, predictions[grep("sas", predictions$name, ignore.case=TRUE),])
+rxCrossTabs(~ category, predictions, 
+            rowSelection=grepl("sas", name, ignore.case=TRUE))$counts
+
+# Real names are more likely to contain the letter 'i'
+rxCrossTabs(~ category, predictions, 
+            rowSelection=grepl("i", name, ignore.case=TRUE))$counts
+
+# ... but less likely to contain 'ii'
+rxCrossTabs(~ category, predictions, 
+            rowSelection=grepl("ii", name, ignore.case=TRUE))$counts
+
+# Names rarely contain 'f'
+rxCrossTabs(~ category, predictions, 
+            rowSelection=grepl("f", name, ignore.case=TRUE))$counts
+
+# ... but 'ff' is more common than you would expect based on the frequency of 'f'
+rxCrossTabs(~ category, predictions, 
+            rowSelection=grepl("ff", name, ignore.case=TRUE))$counts
+
+
+```
+
+# Learning Curves
+
+## Define a grid of parameter values
 
 ```{r generate_parameters_table}
+# Load helper functions.
 source("learning_curve_lib.R")
 
-K_FOLDS <- 3
-SALT <- 1
-MAX_TSS <- (1 - 1/K_FOLDS) * N # approximate number of cases available for training.
+K_FOLDS <- 3  # number of cross-validation groups
+SALT <- 1     # add to pseudorandom number generator seed
+MAX_TSS <- (1 - 1/K_FOLDS) * N # approximate number of training cases.
 
-if (HDINSIGHT){
+# Define parameter ranges to scan over; we'll be more ambitious 
+# if we can run on a cluster.
+if (USE_CLUSTER){
   L1_WEIGHTS <- c(0, 10^(c(-8, -6)))
   L2_WEIGHTS <- 10^c(-9, -6, -4)
   # L2_WEIGHTS cannot be smaller than 9.9999999*10^-10
   N_GRAM_LENGTHS <- 1:4
   NUM_TSS <- 10
+  TEST_SET_KFOLD_IDS <- 1 # 1:3
 } else {
   L1_WEIGHTS <- 0
   L2_WEIGHTS <- 10^c(-9, -5)
   N_GRAM_LENGTHS <- 1:3
   NUM_TSS <- 8
+  TEST_SET_KFOLD_IDS <- 1
 }
 names(N_GRAM_LENGTHS) <- N_GRAM_LENGTHS
 
+# Calculate the proportions of the training set that we will actually use.
+# These values are evenly spaced on a log scale.
 training_fractions <- get_training_set_fractions(1000, MAX_TSS, NUM_TSS)
 
+# rxFastLinear is one of the algorithms in MicrosoftML
 library(MicrosoftML)
 
-# Give additional arguments specific for each learner, as needed
+# Provide additional arguments specific for each learner, as needed.
+# This approach is useful if you want to compare different learners.
 LEARNERS <- list(
   rxFastLinear=list(convergenceTolerance = 0.1, 
                     normalize="No", 
                     lossFunction=logLoss())
 )
 
-
+# Generate a set of text featurizer specifications;
+# here each uses a different ngramLength.
 ML_TRANSFORMS <- lapply(N_GRAM_LENGTHS, function(ngl)
   featurizeText(vars = c(chargrams = "name"),
                 case='lower',
@@ -159,26 +300,30 @@ ML_TRANSFORMS <- lapply(N_GRAM_LENGTHS, function(ngl)
                   ngramLength=ngl, weighting = "tf", maxNumTerms=1e8),
                 wordFeatureExtractor = NULL))
 
-
+# Collect the values for the parameter grid ...
 grid_dimensions <- list( model_class=names(LEARNERS),
                          training_fraction=training_fractions,
                          with_formula="is_real ~ chargrams",
-                         test_set_kfold_id=1,
+                         test_set_kfold_id=TEST_SET_KFOLD_IDS,
                          KFOLDS=K_FOLDS,
                          mlTransforms=ML_TRANSFORMS,
                          l1Weight = L1_WEIGHTS,
                          l2Weight = L2_WEIGHTS
                    )
 
+# ... and expand the grid into a dataframe.
 parameter_table <- do.call(expand.grid, c(grid_dimensions, stringsAsFactors=FALSE))
 
+# Examine the resulting parameter table.
 head(parameter_table)
 
 ```
 
-## Run the jobs
+## Break the table into jobs
 
-```{r run_parameter_sets}
+```{r create_parameter_list}
+# Generate a list of parameter sets. Each row in the parameter table becomes
+# an element in this list, plus we add other settings that are not part of the grid.
 parameter_list <- lapply(1:nrow(parameter_table), function(i){
   par <- parameter_table[i,]
   par <- as.list(c(data_table=data_table,
@@ -188,26 +333,56 @@ parameter_list <- lapply(1:nrow(parameter_table), function(i){
   par
 })
 
-if (HDINSIGHT){
-  rxSetComputeContext(RxSpark(
+
+# Set the compute context to determine where the jobs will be sent.
+if (USE_CLUSTER){
+  cc <- rxSparkConnect(
       consoleOutput=TRUE,
       numExecutors=4,
       executorCores=8,
-      executorOverheadMemory = "20000m"))
+      executorOverheadMemory = "20000m")
+} else if (USE_SPARK){
+  cc <- rxSparkConnect(consoleOutput = TRUE,
+                       executorCores = 4,
+                       driverMem = "2g",
+                       executorMem = "2g",
+                       executorOverheadMem = "4g")
 } else {
   rxSetComputeContext("localpar")
 }
+```
 
-t3 <- Sys.time()
-training_results <- rxExec(run_training_fraction,
-                           elemArgs = parameter_list,
-                           execObjects = c("data_table", "SALT"))
+## Run the jobs
 
-sprintf("Time to train models: %s", Sys.time() - t3)
+```{r run_parameter_sets, cache=FALSE}
+# Cache the results manually, so that RMarkdown can use the results
+# we get by stepping through the code.
+TRAINING_RESULTS_FILE <- "training_results.Rds"
 
+if (file.exists(TRAINING_RESULTS_FILE)){
+  training_results <- readRDS(TRAINING_RESULTS_FILE) 
+} else {
+  t3 <- Sys.time()
+  # Farm out the sets of parameters as jobs sent to the current
+  # compute context.
+  # data_table <- data_table@file
+
+  training_results <- rxExec(run_training_fraction,
+                             elemArgs = parameter_list,
+                             execObjects = c("data_table", "SALT")) # 
+  
+  print(difftime(Sys.time(), t3))
+  
+  # Cache the results
+  saveRDS(training_results, TRAINING_RESULTS_FILE)
+}
+
+if (USE_SPARK) rxSparkDisconnect(cc)
 ```
 
 ## Visualize Results
+
+Since the results of all these calculations fit easily into memory, we can use open source R from here on. This is a `tidyverse` pipeline
 
 ```{r unique_names_results_rxFastLinear}
 
@@ -215,24 +390,44 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-training_results2 <- lapply(training_results, function(tr){
-  names(tr)[10] <- "mltransforms"
-  tr
-})
-training_results_df <- bind_rows(training_results2)
+# Note that we need to pull the value of ngramLength out of the mltransform 
+# specification using a regular expression
 
-# names(training_results_df)[10] <- "mltransforms"
-training_results_df$ngramLength <- gsub(".*ngramLength=([0-9]+) .*", "\\1", training_results_df$mltransforms)
-
-training_results_df %>%
-  filter(l2Weight < 0.01) %>%
+tidy_results <- training_results %>% 
+  lapply(function(tr){
+    names(tr)[10] <- "mltransforms"
+    tr
+  }) %>%
+  bind_rows %>%
   gather(set, AUC, training, test) %>%
   mutate(kfold = factor(kfold), 
          l1Weight=factor(l1Weight), 
-         l2Weight=factor(l2Weight)) %>%
-  ggplot(aes(x=log10(tss), y=AUC, col=ngramLength, linetype=set)) + geom_line(size=1.0) + 
+         l2Weight=factor(l2Weight),
+         ngramLength=gsub(".*ngramLength=([0-9]+) .*", "\\1", mltransforms))
+
+# Plot the grid of results
+tidy_results %>%
+  ggplot(aes(x=log10(tss), y=AUC, col=ngramLength, linetype=set)) + 
+  geom_line(size=1.0) + 
   facet_grid(l1Weight ~ l2Weight) +
     ggtitle("faceting by regularization weights")
+
+# Zoom in on the best parameter set
+max_auc <- tidy_results %>% 
+  filter(set=="test") %>% 
+  select(AUC) %>% 
+  max
+
+max_p <- tidy_results %>% filter(set=="test" & AUC==max_auc)
+  
+tidy_results %>%
+  filter(l1Weight==max_p$l1Weight & l2Weight==max_p$l2Weight) %>%
+  ggplot(aes(x=log10(tss), y=AUC, col=ngramLength, linetype=set,
+             group=interaction(set, kfold, ngramLength))) + 
+  geom_line(size=1.0) + 
+  coord_cartesian(ylim=c(0.995, 1.0)) +
+  facet_grid(l1Weight ~ l2Weight) +
+  ggtitle("zoom in on best test results")
 
 
 ```

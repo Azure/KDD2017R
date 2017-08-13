@@ -9,17 +9,18 @@ from http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html.
 ## Connecting to the Data Science Virtual Machine on Microsoft Azure
 We will provide Azure Data Science Virtual Machines (running Spark 2.1.1) for attendees to use during the tutorial. You will use your laptop to connect to your allocated virtual machine.
 
-* <b>On Windows:</b> command line to connect with plink.exe - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
+* **On Windows:** command line to connect with plink.exe - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
 ```bash
 cd directory-containing-plink.exe
 .\plink.exe -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser@XXX
 ```
-* <b>On Linux or Mac:</b> command line to connect with ssh - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
+* **On Linux or Mac:** command line to connect with ssh - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
 ```bash
 ssh -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser@XXX
 ```
-* After connecting via the above command lines, open [http://localhost:8787/](http://localhost:8787/) in your web browser to connect to RStudio Server on your Data Science Virtual Machine<br>
-<b>NOTE: During the tutorial, attendees will use RStudio Server on their Data Science Virtual Machines. The terminal window with ssh is only used to provide a secure tunnel to RStudio Server.</b>
+* After connecting via the above command lines, open [http://localhost:8787/](http://localhost:8787/) in your web browser to connect to **RStudio Server** on your Data Science Virtual Machine<br>
+* You can also open [http://localhost:8088/](http://localhost:8088/) in your web browser to connect to the **YARN User Interface** on the Data Science Virtual Machine to monitor YARN applications and node health<br>
+* Note that the terminal window with ssh or plink is only needed to provide a secure tunnel to the Data Science Virtual Machine
 
 <hr>
 

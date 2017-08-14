@@ -167,4 +167,23 @@ rxSparkDisconnect(cc)
 
 # Check the contents of the first scores file
 scoresXdf <- scoreFiles[[1]]
-rxGetInfo(scoresXdf, getVarInfo = T)
+rxGetInfo(scoresXdf, getVarInfo = T, numRows = 3)
+
+# Sample output from rxGetInfo:
+
+# File name: /tmp/testSubsetScoresXdf-s-1
+# Number of composite data files: 1
+# Number of observations: 6250
+# Number of variables: 4
+# Number of blocks: 1
+# Compression type: none
+# Variable information:
+#   Var 1: fname, Type: character
+# Var 2: PredictedLabel, Type: logical, Low/High: (0, 1)
+# Var 3: Score, Type: numeric, Storage: float32, Low/High: (-11.3273, 9.0390)
+# Var 4: Probability, Type: numeric, Storage: float32, Low/High: (0.0000, 0.9999)
+# Data (3 rows starting with row 1):
+#   fname PredictedLabel      Score Probability
+# 1 aclImdb/test/pos/10695_10.txt           TRUE  0.9811620 0.727338731
+# 2   aclImdb/test/pos/4242_9.txt           TRUE  0.7777346 0.685191691
+# 3   aclImdb/test/neg/7823_1.txt          FALSE -4.8393278 0.007850257

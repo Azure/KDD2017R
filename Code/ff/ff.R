@@ -19,6 +19,9 @@ setwd("/data/airline")
 # call the library
 library("ff")
 
+options(fftempdir = "/data/airline/tmp")
+dir.create(getOption("fftempdir"))
+
 # read airline data into a ffdf object (20 million rows * 26 columns; 1.5GB)
 # (it takes 2+ mins~)
 airline_ff <- read.csv.ffdf(file = "airline_20MM.csv",

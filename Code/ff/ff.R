@@ -48,3 +48,6 @@ airline_ff[, "CRSDepTime"] <- floor(airline_ff[, "CRSDepTime"] / 100)
 model_ff <- bigglm.ffdf(formula = IsArrDelayed ~ Month+DayofMonth+DayOfWeek+CRSDepTime+Distance, 
                         data = airline_ff, family = binomial())
 summary(model_ff)
+
+# Clean up
+delete(airline_ff)

@@ -1,3 +1,31 @@
+# This repository has content for the KDD 2017 tutorial "Using R for Scalable Data Science"
+
+## Tutorial Prerequisites
+* Please bring a wireless enabled laptop.
+* Make sure your machine has an ssh client with port-forwarding capability. On Mac or Linux, simply run the ssh command in a terminal window.
+On Windows, download [plink.exe](https://the.earth.li/~sgtatham/putty/latest/x86/plink.exe)
+from http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html.
+
+## Connecting to the Data Science Virtual Machine on Microsoft Azure
+We will provide Azure Data Science Virtual Machines (running Spark 2.1.1) for attendees to use during the tutorial. You will use your laptop to connect to your allocated virtual machine.
+
+* **On Windows:** command line to connect with plink.exe - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
+```bash
+cd directory-containing-plink.exe
+.\plink.exe -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser@XXX
+```
+* **On Linux or Mac:** command line to connect with ssh - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
+```bash
+ssh -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser@XXX
+```
+* After connecting via the above command lines, open [http://localhost:8787/](http://localhost:8787/) in your web browser to connect to **RStudio Server** on your Data Science Virtual Machine<br>
+* You can also open [http://localhost:8088/](http://localhost:8088/) in your web browser to connect to the **YARN User Interface** on the Data Science Virtual Machine to monitor YARN applications and node health<br>
+* Note that the terminal window with ssh or plink is only needed to provide a secure tunnel to the Data Science Virtual Machine
+
+<hr>
+
+
+
 **TITLE: Using R for Scalable Data Science: Single Machines to Hadoop Spark Clusters**
 
 PRESENTERS: Robert Horton, Mario Inchiosa, Vanja Paunic, and Hang Zhang

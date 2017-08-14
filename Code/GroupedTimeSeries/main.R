@@ -9,7 +9,7 @@ setwd("~/KDD2017R/Code/GroupedTimeSeries")
 source('forecast_utils.R')
 source('params_search_utils.R')
 # Set global variables
-RUN_LOCAL <- TRUE
+RUN_LOCAL <- FALSE
 EXPORT2POOL <- c(as.vector(lsf.str()), 'RUN_LOCAL')
 
 # Reading the dataset
@@ -48,8 +48,6 @@ if(RUN_LOCAL){
   
   # 5. Register the pool as your parallel backend
   registerDoAzureParallel(cluster)
-  # Turn on or off verbose mode
-  setVerbose(FALSE)
   
   # 6. Check that your parallel backend has been registered
   getDoParWorkers()

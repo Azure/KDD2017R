@@ -1,4 +1,4 @@
-# This repository has content for the KDD 2017 tutorial "Using R for Scalable Data Science"
+\# This repository has content for the KDD 2017 tutorial "Using R for Scalable Data Science"
 
 ## Tutorial Prerequisites
 * Please bring a wireless enabled laptop.
@@ -10,7 +10,7 @@ from http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html.
 
 The first section of this half-day tutorial is the in-database advanced analytics in SQL Server 2016 with Microsoft R. You will be using a Jupyter notebook running on an Azure virtual machine with R kernel. The jupyter notebook will connect to a SQL Server hosted on another Azure virtual machine. Both Jupyter Notebook server and SQL Server virtual machines have been created for you. You will need the information on the paper clip handed out to you when you enter the tutorial room. Since multiple users will be using the same Jupyter Notebook server (10 servers created), and the same SQL Server (5 servers created), please follow the following steps as much as you can, to minimize the interference with other users on the same machine. 
 
-Step 1. Open https://<ip address under Jupyter Notebook server>:9999 from a browser, Ignore security warnings.
+Step 1. Open https://\<ip address xxx.xxx.xxx.xxx\>:9999 from a browser, Ignore security warnings.
 
 Step 2. Input password: **Kdd2017@Halifax** when prompted
 

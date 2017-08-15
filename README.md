@@ -22,6 +22,13 @@ ssh -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser
 * You can also open [http://localhost:8088/](http://localhost:8088/) in your web browser to connect to the **YARN User Interface** on the Data Science Virtual Machine to monitor YARN applications and node health<br>
 * Note that the terminal window with ssh or plink is only needed to provide a secure tunnel to the Data Science Virtual Machine
 
+## Locating and Running the Tutorials on the Data Science Virtual Machine
+In the RStudio *Files* pane, click **KDD2017R** and then **Code**
+1. **MRS** directory: Run **1-Clean-Join.r, 2-Train-Test.r, 3-Deploy-Score.r**
+2. **learning_curves** directory: Run **gibberish_hdinsight_rxFastLinear.Rmd**
+3. **GroupedTimeSeries** directory: Run **main.R**
+4. **SentimentAnalysis** directory: Run **movie_sentiment.R**
+
 <hr>
 
 

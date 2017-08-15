@@ -6,6 +6,28 @@
 On Windows, download [plink.exe](https://the.earth.li/~sgtatham/putty/latest/x86/plink.exe)
 from http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html.
 
+## Steps to run the tutorial of In-Database Advanced Analytics
+
+The first section of this half-day tutorial is the in-database advanced analytics in SQL Server 2016 with Microsoft R. You will be using a Jupyter notebook running on an Azure virtual machine with R kernel. The jupyter notebook will connect to a SQL Server hosted on another Azure virtual machine. Both Jupyter Notebook server and SQL Server virtual machines have been created for you. You will need the information on the paper clip handed out to you when you enter the tutorial room. Since multiple users will be using the same Jupyter Notebook server (10 servers created), and the same SQL Server (5 servers created), please follow the following steps as much as you can, to minimize the interference with other users on the same machine. 
+
+Step 1. Open https://<ip address under Jupyter Notebook server>:9999 from a browser, Ignore security warnings.
+
+Step 2. Input password: **Kdd2017@Halifax** when prompted
+
+Step 3. Click on ***Prepare Jupyter Notebooks.ipynb*** to open. Click "Continue" to ignore any security warning.
+
+Step 4.	In the first cell, input a directory name that should be unique to you, and has high odds to be unique among the all audience.
+
+Step 5.	Run the cells one by one, all run all of them in a batch. Press SHIFT-ENTER to run each cell, or got to the Cell menu and click “Run All”. After running all cells, go to the File menu and click “Close and Halt”.
+
+Step 6.	There should be a directory created with the name you provided in Step 4. Open the SQL_R_Services_End….ipynb **UNDER THAT DIRECTORY**. Ignore any security warning.
+
+Step 7.	In the first cell, input the following information about a SQL server that is provided on the paper clip under the line of **SQL Server Information**:
+	
+	IP: xx.xxx.xxx.xxx
+	UID: sqluserxxxx
+	PWD: Kdd17@Halifax_xxxxx
+
 ## Connecting to the Data Science Virtual Machine on Microsoft Azure
 We will provide Azure Data Science Virtual Machines (running Spark 2.1.1) for attendees to use during the tutorial. You will use your laptop to connect to your allocated virtual machine.
 

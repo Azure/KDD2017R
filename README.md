@@ -31,7 +31,7 @@ Step 7.	In the first cell, input the following information about a SQL server th
 ## Connecting to the Data Science Virtual Machine on Microsoft Azure
 We will provide Azure Data Science Virtual Machines (running Spark 2.1.1) for attendees to use during the tutorial. You will use your laptop to connect to your allocated virtual machine.
 
-* **On Windows:** command line to connect with plink.exe - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
+* **On Windows:** command line to connect with [plink.exe](https://the.earth.li/~sgtatham/putty/latest/x86/plink.exe) - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
 ```bash
 cd directory-containing-plink.exe
 .\plink.exe -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser@XXX

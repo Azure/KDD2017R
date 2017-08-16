@@ -9,7 +9,7 @@ setwd("~/KDD2017R/Code/GroupedTimeSeries")
 source('forecast_utils.R')
 source('params_search_utils.R')
 # Set global variables
-RUN_LOCAL <- FALSE
+RUN_LOCAL <- TRUE
 EXPORT2POOL <- c(as.vector(lsf.str()), 'RUN_LOCAL')
 
 # Reading the dataset

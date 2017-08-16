@@ -75,6 +75,10 @@ mkdir /data/learning_curves
 # Make directory used by Spark compute context
 mkdir -p /var/RevoShare/remoteuser
 
+# Create /tmp directory in HDFS
+/opt/hadoop/current/bin/hdfs dfs -mkdir /tmp
+/opt/hadoop/current/bin/hdfs dfs -chmod 777 /tmp
+
 #######################################################################################################################################
 #######################################################################################################################################
 ## Change ownership of some of directories

@@ -48,7 +48,7 @@ ssh -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser
 In the RStudio *Files* pane, click **KDD2017R** and then **Code**
 1. **MRS** directory: Run **1-Clean-Join.r, 2-Train-Test.r, 3-Deploy-Score.r**. In 3-Deploy-Score.r on line 43, please **replace "INSERT PASSWORD HERE" with "KDD2017+halifax"**
 2. **learning_curves** directory: Run **gibberish_hdinsight_rxFastLinear.Rmd**
-3. **GroupedTimeSeries** directory: Run **main.R**
+3. **GroupedTimeSeries** directory: Run **main.R**. To run locally on the VM, please set **RUN_LOCAL <- TRUE** on line 12.
 4. **SentimentAnalysis** directory: Run **movie_sentiment.R**
 
 <hr>

@@ -1,4 +1,4 @@
-# This repository has content for the KDD 2017 tutorial "Using R for Scalable Data Science"
+\# This repository has content for the KDD 2017 tutorial "Using R for Scalable Data Science"
 
 ## Tutorial Prerequisites
 * Please bring a wireless enabled laptop.
@@ -6,10 +6,32 @@
 On Windows, download [plink.exe](https://the.earth.li/~sgtatham/putty/latest/x86/plink.exe)
 from http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html.
 
+## Steps to run the tutorial of In-Database Advanced Analytics
+
+The first section of this half-day tutorial is the in-database advanced analytics in SQL Server 2016 with Microsoft R. You will be using a Jupyter notebook running on an Azure virtual machine with R kernel. The jupyter notebook will connect to a SQL Server hosted on another Azure virtual machine. Both Jupyter Notebook server and SQL Server virtual machines have been created for you. You will need the information on the paper clip handed out to you when you enter the tutorial room. Since multiple users will be using the same Jupyter Notebook server (10 servers created), and the same SQL Server (5 servers created), please follow the following steps as much as you can, to minimize the interference with other users on the same machine. 
+
+Step 1. Open https://\<ip address xxx.xxx.xxx.xxx\>:9999 from a browser, Ignore security warnings.
+
+Step 2. Input password: **Kdd2017@Halifax** when prompted
+
+Step 3. Click on ***Prepare Jupyter Notebooks.ipynb*** to open. Click "Continue" to ignore any security warning.
+
+Step 4.	In the first cell, input a directory name that should be unique to you, and has high odds to be unique among the all audience.
+
+Step 5.	Run the cells one by one, all run all of them in a batch. Press SHIFT-ENTER to run each cell, or got to the Cell menu and click “Run All”. After running all cells, go to the File menu and click “Close and Halt”.
+
+Step 6.	There should be a directory created with the name you provided in Step 4. Open the SQL_R_Services_End….ipynb **UNDER THAT DIRECTORY**. Ignore any security warning.
+
+Step 7.	In the first cell, input the following information about a SQL server that is provided on the paper clip under the line of **SQL Server Information**:
+	
+	IP: xx.xxx.xxx.xxx
+	UID: sqluserxxxx
+	PWD: Kdd17@Halifax_xxxxx
+
 ## Connecting to the Data Science Virtual Machine on Microsoft Azure
 We will provide Azure Data Science Virtual Machines (running Spark 2.1.1) for attendees to use during the tutorial. You will use your laptop to connect to your allocated virtual machine.
 
-* **On Windows:** command line to connect with plink.exe - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
+* **On Windows:** command line to connect with [plink.exe](https://the.earth.li/~sgtatham/putty/latest/x86/plink.exe) - run the following commands in a Windows command prompt window - replace XXX with the IP address of your Data Science Virtual Machine [e.g. 40.80.111.222]
 ```bash
 cd directory-containing-plink.exe
 .\plink.exe -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser@XXX
@@ -21,6 +43,13 @@ ssh -L localhost:8787:localhost:8787 -L localhost:8088:localhost:8088 remoteuser
 * After connecting via the above command lines, open [http://localhost:8787/](http://localhost:8787/) in your web browser to connect to **RStudio Server** on your Data Science Virtual Machine<br>
 * You can also open [http://localhost:8088/](http://localhost:8088/) in your web browser to connect to the **YARN User Interface** on the Data Science Virtual Machine to monitor YARN applications and node health<br>
 * Note that the terminal window with ssh or plink is only needed to provide a secure tunnel to the Data Science Virtual Machine
+
+## Locating and Running the Tutorials on the Data Science Virtual Machine
+In the RStudio *Files* pane, click **KDD2017R** and then **Code**
+1. **MRS** directory: Run **1-Clean-Join.r, 2-Train-Test.r, 3-Deploy-Score.r**. In 3-Deploy-Score.r on line 43, please **replace "INSERT PASSWORD HERE" with "KDD2017+halifax"**
+2. **learning_curves** directory: Run **gibberish_hdinsight_rxFastLinear.Rmd**
+3. **GroupedTimeSeries** directory: Run **main.R**. To run locally on the VM, please set **RUN_LOCAL <- TRUE** on line 12.
+4. **SentimentAnalysis** directory: Run **movie_sentiment.R**
 
 <hr>
 
